@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Allow requests from anywhere (for testing)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,11 +15,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# The correct hash for the passphrase (replace with your actual hash)
+# Replace this with your actual passphrase hash
 CORRECT_HASH = "2de9e046285e7a905067fbf736633ac5f85fdc8bf2e8ad868280459689c100b5"
 
-# Your Gemini API key (set in Railway environment variables)
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+# Groq API key from environment variable
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 class VerifyRequest(BaseModel):
     passphrase: str
@@ -31,7 +30,7 @@ class AgentRequest(BaseModel):
 
 @app.get("/")
 def root():
-    return {"message": "Agent-Alpha-01 API is running"}
+    return {"message": "Agent-Alpha-01 API is running (Groq backend)"}
 
 @app.post("/verify")
 def verify(request: VerifyRequest):
@@ -42,11 +41,8 @@ def verify(request: VerifyRequest):
 
 @app.post("/agent")
 def agent(request: AgentRequest):
-    # In a real implementation, you would verify a session token here
-    # For simplicity, we are skipping session verification
-    
-    if not GEMINI_API_KEY:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not set")
+    if not GROQ_API_KEY:
+        raise HTTPException(status_code=500, detail="GROQ_API_KEY not set")
     
     prompt = f"""You are Agent-Alpha-01, a strategic co-builder.
 
@@ -56,23 +52,26 @@ AUDIT REPORT: {request.audit_report}
 
 Provide strategic advice based on the mission and audit report. Be concise and actionable."""
     
-    # Call Gemini API
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
-    
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
     payload = {
-        "contents": [
-            {
-                "parts": [{"text": prompt}]
-            }
-        ]
+        "messages": [
+            {"role": "system", "content": "You are Agent-Alpha-01, a strategic co-builder."},
+            {"role": "user", "content": prompt}
+        ],
+        "model": "llama-3.3-70b-versatile",
+        "temperature": 0.7
     }
     
     try:
         with httpx.Client(timeout=30.0) as client:
-            response = client.post(url, json=payload)
+            response = client.post(url, json=payload, headers=headers)
             response.raise_for_status()
             data = response.json()
-            advice = data["candidates"][0]["content"]["parts"][0]["text"]
+            advice = data["choices"][0]["message"]["content"]
             return {"advice": advice}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Gemini API error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Groq API error: {str(e)}")
