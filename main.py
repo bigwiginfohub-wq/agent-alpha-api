@@ -17,8 +17,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# SHA-256 hash of "KaronBeach2026"
-CORRECT_HASH = "2de9e046285e7a905067fbf736633ac5f85fdc8bf2e8ad868280459689c100b5"
+# Multiple valid hashes for different modes
+# Mode 2: KaronBeach2026
+# Mode 3: DeltaFirst2026
+VALID_HASHES = [
+    "2de9e046285e7a905067fbf736633ac5f85fdc8bf2e8ad868280459689c100b5",  # Mode 2: KaronBeach2026
+    "6c4be6fabdafd60bd766b15b572d67f26006e52723a58f521900cb47234aed7d"   # Mode 3: DeltaFirst2026
+]
 
 # Groq API key from environment variable
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
@@ -41,7 +46,7 @@ def root():
 @app.post("/verify")
 def verify(request: VerifyRequest):
     input_hash = hashlib.sha256(request.passphrase.encode()).hexdigest()
-    if input_hash != CORRECT_HASH:
+    if input_hash not in VALID_HASHES:
         raise HTTPException(status_code=401, detail="ACCESS DENIED")
     return {"status": "VERIFIED", "message": "Access granted"}
 
@@ -104,6 +109,6 @@ def generate_prompt(request: PromptRequest):
 6. Be concise and actionable.
 
 **BEGIN:**
-Ask the user: "What is your next priority for this mission?" """
+Ask the user: "What is your next priority for this mission?"""
 
     return {"prompt": prompt}
