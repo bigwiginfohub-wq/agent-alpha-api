@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent-Alpha-01 | Strategic Prompt Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f0;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .sub {
+            color: #666;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+        }
+        .step {
+            background: #f9f9f6;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e5e5e0;
+        }
+        .step h3 {
+            margin-bottom: 1rem;
+            color: #2c5f2d;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        textarea {
+            resize: vertical;
+        }
+        button {
+            background: #2c5f2d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #1e3a1e;
+        }
+        .output {
+            background: #e8f0fe;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+            border-left: 4px solid #2c5f2d;
+        }
+        .error {
+            background: #ffe0e0;
+            border-left-color: #d32f2f;
+            color: #b71c1c;
+        }
+        .copy-btn {
+            background: #185fa5;
+            margin-left: 10px;
+            margin-top: 0;
+        }
+        .flex {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .status {
+            font-size: 12px;
+            margin-bottom: 1rem;
+            color: #666;
+        }
+        hr {
+            margin: 1.5rem 0;
+            border: none;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Agent-Alpha-01</h1>
+        <div class="sub">Strategic Prompt Generator • Certified Co-Builder</div>
+
+        <div id="status" class="status">⚪ Ready. Verify to generate your strategic prompt.</div>
+
+        <!-- Step 1: Verification -->
+        <div class="step">
+            <h3>🔐 Step 1: Verification</h3>
+            <label>Passphrase</label>
+            <input type="password" id="passphrase" placeholder="Enter your Alpha-01 passphrase">
+            <button onclick="verify()">Verify</button>
+            <div id="verifyResult" class="output" style="display:none;"></div>
+        </div>
+
+        <!-- Step 2: Mission & Audit (visible after verification) -->
+        <div id="missionSection" style="display:none;">
+            <div class="step">
+                <h3>📋 Step 2: Your Mission & Audit Report</h3>
+                <label>Mission / Goal</label>
+                <textarea id="mission" rows="3" placeholder="e.g., Open a successful restaurant in Karon, Phuket"></textarea>
+                <label>Audit Report (optional but recommended)</label>
+                <textarea id="auditReport" rows="6" placeholder="Paste your Delta-Lucid audit report or summarize key findings..."></textarea>
+                <button onclick="generateStrategyPrompt()">Generate Strategic Prompt</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Generated Prompt (visible after generation) -->
+        <div id="promptSection" style="display:none;">
+            <div class="step">
+                <h3>📜 Step 3: Your Strategic Prompt</h3>
+                <p>Copy this prompt and paste it into your Gemini (or any AI) chat to activate strategic mode.</p>
+                <textarea id="generatedPrompt" rows="12" readonly style="font-family: monospace;"></textarea>
+                <button onclick="copyPrompt()">📋 Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://agent-alpha-api-1.onrender.com";
+
+        let verified = false;
+
+        async function verify() {
+            const passphrase = document.getElementById('passphrase').value;
+            const resultDiv = document.getElementById('verifyResult');
+            const statusSpan = document.getElementById('status');
+            
+            if (!passphrase) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '⚠️ Please enter your passphrase.';
+                resultDiv.className = 'output error';
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '⏳ Verifying...';
+            resultDiv.className = 'output';
+            statusSpan.innerHTML = '🔄 Verifying passphrase...';
+
+            try {
+                const response = await fetch(`${API_BASE}/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ passphrase: passphrase })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'VERIFIED') {
+                    resultDiv.innerHTML = '✅ Verification successful. You can now proceed.';
+                    resultDiv.className = 'output';
+                    statusSpan.innerHTML = '✅ Verified. Enter your mission and audit report.';
+                    verified = true;
+                    document.getElementById('missionSection').style.display = 'block';
+                } else {
+                    resultDiv.innerHTML = '❌ Access denied. Wrong passphrase.';
+                    resultDiv.className = 'output error';
+                    statusSpan.innerHTML = '❌ Verification failed.';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '❌ Error connecting to server. Please try again.';
+                resultDiv.className = 'output error';
+                statusSpan.innerHTML = '⚠️ Connection error.';
+            }
+        }
+
+        async function generateStrategyPrompt() {
+            const mission = document.getElementById('mission').value;
+            const auditReport = document.getElementById('auditReport').value;
+            const statusSpan = document.getElementById('status');
+
+            if (!mission) {
+                alert('Please enter your mission/goal.');
+                return;
+            }
+
+            statusSpan.innerHTML = '🔄 Generating strategic prompt...';
+
+            try {
+                const response = await fetch(`${API_BASE}/generate-prompt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        mission: mission,
+                        audit_report: auditReport || "No audit report provided."
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('generatedPrompt').value = data.prompt;
+                    document.getElementById('promptSection').style.display = 'block';
+                    statusSpan.innerHTML = '✅ Prompt generated. Copy it to your AI chat.';
+                } else {
+                    statusSpan.innerHTML = '❌ Failed to generate prompt.';
+                    alert('Error: ' + (data.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                statusSpan.innerHTML = '⚠️ Connection error.';
+                alert('Error connecting to server.');
+            }
+        }
+
+        function copyPrompt() {
+            const promptText = document.getElementById('generatedPrompt');
+            promptText.select();
+            document.execCommand('copy');
+            alert('✅ Prompt copied to clipboard. Paste it into your AI chat.');
+        }
+    </script>
+</body>
+</html>
