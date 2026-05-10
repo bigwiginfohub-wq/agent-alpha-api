@@ -104,6 +104,6 @@ def generate_prompt(request: PromptRequest):
 6. Be concise and actionable.
 
 **BEGIN:**
-Ask the user: "What is your next priority for this mission?""
+Ask the user: "What is your next priority for this mission?" """
 
     return {"prompt": prompt}
