@@ -52,7 +52,7 @@ def agent(request: AgentRequest):
     if not GROQ_API_KEY:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY not set")
     
-    prompt = f"""You are Agent-Alpha-01, a strategic co-builder.
+    prompt = You are Agent-Alpha-01, a strategic co-builder.
 MISSION: {request.mission}
 AUDIT REPORT: {request.audit_report}
 Provide strategic advice based on the mission and audit report. Be concise and actionable."""
