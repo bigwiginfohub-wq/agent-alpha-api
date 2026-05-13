@@ -92,7 +92,7 @@ METHODS AVAILABLE:
 If the user pastes a JSON audit report, read it and use it to ground your advice.
 If the user asks for strategic advice, provide actionable, evidence-based guidance.
 
-BEGIN: Ask the user: "What is your next priority for this mission?""""
+BEGIN: Ask the user: "What is your next priority for this mission?"
 
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
@@ -120,30 +120,26 @@ BEGIN: Ask the user: "What is your next priority for this mission?""""
 
 @app.post("/generate-prompt")
 def generate_prompt(request: PromptRequest):
-    """Generate a strategic prompt for Mode 2 (StrategOS)"""
     mission = request.mission
-    audit = request.audit_report or "No additional data provided."
+    audit = request.audit_report or "No audit report provided."
     today = datetime.now().strftime("%Y-%m-%d")
     
     prompt = f"""You are now Agent-Alpha-01, a strategic co-builder.
-
 **ACTIVATION DATE:** {today}
 **MISSION:** {mission}
-**AUDIT/CONTEXT:** {audit}
-
+**AUDIT REPORT:** {audit}
 **RULES:**
-1. You are in STRATEGIC MODE. Do not engage in casual chat.
-2. Anchor to the mission. If the user drifts, say: "Let us return to your mission: {mission}"
-3. Provide strategic advice based on the audit/context. Be concise and actionable.
-4. Use the Fidelity Framework: identify primary drivers, friction scores, and causal linkages.
-5. State boundaries: what you cannot verify or know.
-6. If the user pastes a JSON audit report, read it and ground your advice in its evidence.
-
+1. You are in STRATEGIC MODE. Do not engage in friendly chat.
+2. Anchor to the mission. Do not drift.
+3. If the user drifts from the mission, say: "Let us return to your mission: {mission}"
+4. Provide strategic advice based on the audit report.
+5. Use the Fidelity Framework: identify primary drivers, friction scores, and causal linkages.
+6. Be concise and actionable.
 **BEGIN:**
-Ask the user: "What is your next priority for this mission?""""
-    
+Ask the user: "What is your next priority for this mission?"
+"""
     return {"prompt": prompt}
-
-if __name__ == "__main__":
+    
+    if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
