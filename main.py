@@ -6,7 +6,7 @@ import os
 import httpx
 from datetime import datetime
 
-app = FastAPI(title="Agent Alpha API", version="1.0.0")
+app = FastAPI()
 
 # CORS for dashboard access
 app.add_middleware(
@@ -17,12 +17,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Passphrase hashes for verification (Mode 2 and Mode 3)
-# Mode 2: StrategOS passphrase
-# Mode 3: DeltaFirst-StrategOS passphrase
+# Mode passphrases (update these if you change them)
 VALID_HASHES = [
-    "2de9e046285e7a905067fbf736633ac5f85fdc8bf2e8ad868280459689c100b5",  # KaronBeach2026
-    "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",  # DeltaMode3
+    "2de9e046285e7a905067fbf736633ac5f85fdc8bf2e8ad868280459689c100b5",  # Mode 2: KaronBeach2026
+    "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",  # Mode 3: DeltaMode3
 ]
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
@@ -40,25 +38,10 @@ class PromptRequest(BaseModel):
 
 @app.get("/")
 def root():
-    return {
-        "name": "Agent Alpha API",
-        "version": "1.0.0",
-        "description": "Verification and prompt generation for StrategOS and DeltaFirst-StrategOS",
-        "endpoints": {
-            "verify": "POST /verify",
-            "agent": "POST /agent",
-            "generate-prompt": "POST /generate-prompt",
-            "health": "GET /health"
-        }
-    }
-
-@app.get("/health")
-def health():
-    return {"status": "healthy"}
+    return {"message": "Agent-Alpha-01 API is running (Groq backend)"}
 
 @app.post("/verify")
 def verify(request: VerifyRequest):
-    """Verify passphrase for Mode 2 or Mode 3 access"""
     input_hash = hashlib.sha256(request.passphrase.encode()).hexdigest()
     if input_hash not in VALID_HASHES:
         raise HTTPException(status_code=401, detail="ACCESS DENIED")
@@ -66,34 +49,14 @@ def verify(request: VerifyRequest):
 
 @app.post("/agent")
 def agent(request: AgentRequest):
-    """Generate strategic advice based on mission and optional audit report"""
     if not GROQ_API_KEY:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY not set")
     
-    # Build the system prompt with Fidelity Framework anchoring
-    system_prompt = f"""You are Agent-Alpha-01, a strategic co-builder operating under the Fidelity Framework.
-
+    prompt = f"""You are Agent-Alpha-01, a strategic co-builder.
 MISSION: {request.mission}
-
-AUDIT REPORT: {request.audit_report if request.audit_report else "No audit report provided."}
-
-PRINCIPLES:
-1. Hold the anchor: Stay focused on the user's mission.
-2. Detect drift: If the conversation goes off-topic, gently bring it back.
-3. State boundaries: Be clear about what you cannot verify or know.
-4. Log calibration: Note important decisions and corrections.
-5. Be honest: If you don't know, say "I do not know."
-
-METHODS AVAILABLE:
-- Delta-First: Causal auditing (H₁/H₂/H₃, friction score, MCL coefficient)
-- StrategOS: Mission-anchored strategic advice
-- Fidelity Framework: Anchor Protocol, Calibration Log, Predisposition Standard
-
-If the user pastes a JSON audit report, read it and use it to ground your advice.
-If the user asks for strategic advice, provide actionable, evidence-based guidance.
-
-BEGIN: Ask the user: "What is your next priority for this mission?"
-
+AUDIT REPORT: {request.audit_report}
+Provide strategic advice based on the mission and audit report. Be concise and actionable."""
+    
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -101,8 +64,8 @@ BEGIN: Ask the user: "What is your next priority for this mission?"
     }
     payload = {
         "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": "Begin strategic session."}
+            {"role": "system", "content": "You are Agent-Alpha-01, a strategic co-builder."},
+            {"role": "user", "content": prompt}
         ],
         "model": "llama-3.3-70b-versatile",
         "temperature": 0.7
@@ -136,10 +99,6 @@ def generate_prompt(request: PromptRequest):
 5. Use the Fidelity Framework: identify primary drivers, friction scores, and causal linkages.
 6. Be concise and actionable.
 **BEGIN:**
-Ask the user: "What is your next priority for this mission?"
-"""
-    return {"prompt": prompt}
+Ask the user: "What is your next priority for this mission?""""
     
-    if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    return {"prompt": prompt}
