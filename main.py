@@ -87,7 +87,7 @@ def generate_prompt(request: PromptRequest):
     audit = request.audit_report or "No audit report provided."
     today = datetime.now().strftime("%Y-%m-%d")
     
-    prompt = f"""You are now Agent-Alpha-01, a strategic co-builder.
+    prompt = You are now Agent-Alpha-01, a strategic co-builder.
 **ACTIVATION DATE:** {today}
 **MISSION:** {mission}
 **AUDIT REPORT:** {audit}
