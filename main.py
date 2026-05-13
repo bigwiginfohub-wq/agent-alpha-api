@@ -245,7 +245,7 @@ def health():
 
 @app.get("/schema")
 def get_schema():
-    """Return Delta-First v5.0.1 JSON Schema for client-side validation"""
+   """Return Delta-first v5.0.1 JSON Schema for client-side validation"""
     return {
         "audit_report": AuditReport.model_json_schema(),
         "constraint_register": ConstraintRegister.model_json_schema()
